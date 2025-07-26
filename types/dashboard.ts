@@ -1,3 +1,7 @@
+export interface SocialData {
+
+}
+
 export interface PriceData {
   current: number
   change24h: number

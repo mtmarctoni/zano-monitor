@@ -7,6 +7,7 @@ import { ErrorDisplay } from "@/components/ErrorBoundary"
 import { ConnectionStatus } from "@/components/ConnectionStatus"
 import { useZanoData } from "@/hooks/useZanoData"
 import { OnchainMetrics } from "@/components/OnchainMetrics"
+import { SocialMetrics } from "@/components/SocialMetrics"
 
 export default function Dashboard() {
   const { data, isLoading, error, lastUpdated, refreshData } = useZanoData()
@@ -74,6 +75,11 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <DevelopmentActivity data={data.github} />
           <OnchainMetrics data={data.onchain} />
+        </div>
+
+        {/* Social Metrics */}
+        <div className="mt-8">
+          <SocialMetrics />
         </div>
 
         {/* Footer */}
