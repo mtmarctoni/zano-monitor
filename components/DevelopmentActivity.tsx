@@ -1,195 +1,233 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Github, Star, GitFork, AlertCircle, Clock, Users, GitCommit, CheckCircle, Code, Activity } from "lucide-react"
-import type { GitHubData } from "@/types/dashboard"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Github, Star, GitFork, AlertCircle, Clock, Users, GitCommit, CheckCircle, Code, Activity, GitPullRequest, GitBranch, GitCommitIcon, GitMerge, GitPullRequestClosed, GitCompare, Tag, GitFork as GitForkIcon, Code2 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { formatDistanceToNow } from "date-fns"
+import type { GitHubData, GitHubUserEvent } from "@/types/dashboard"
+
+const EVENT_ICONS: Record<string, React.ReactNode> = {
+  PushEvent: <GitCommit className="h-4 w-4" />,
+  CreateEvent: <Code2 className="h-4 w-4" />,
+  DeleteEvent: <Code2 className="h-4 w-4" />,
+  PullRequestEvent: <GitPullRequest className="h-4 w-4" />,
+  PullRequestReviewEvent: <GitPullRequest className="h-4 w-4" />,
+  PullRequestReviewCommentEvent: <GitPullRequest className="h-4 w-4" />,
+  IssuesEvent: <AlertCircle className="h-4 w-4" />,
+  IssueCommentEvent: <AlertCircle className="h-4 w-4" />,
+  CommitCommentEvent: <GitCommitIcon className="h-4 w-4" />,
+  ForkEvent: <GitForkIcon className="h-4 w-4" />,
+  WatchEvent: <Star className="h-4 w-4" />,
+  ReleaseEvent: <Tag className="h-4 w-4" />,
+  PullRequestReviewThreadEvent: <GitPullRequest className="h-4 w-4" />,
+  default: <Activity className="h-4 w-4" />,
+}
+
+const getEventActionText = (event: GitHubUserEvent) => {
+  switch (event.type) {
+    case 'PushEvent':
+      return `pushed ${event.payload.size} ${event.payload.size === 1 ? 'commit' : 'commits'} to`
+    case 'CreateEvent':
+      return `created ${event.payload.ref_type} ${event.payload.ref} in`
+    case 'DeleteEvent':
+      return `deleted ${event.payload.ref_type} ${event.payload.ref} in`
+    case 'PullRequestEvent':
+      return `${event.payload.action} pull request #${event.payload.number} in`
+    case 'IssuesEvent':
+      return `${event.payload.action} issue #${event.payload.issue?.number} in`
+    case 'ForkEvent':
+      return 'forked repository'
+    case 'WatchEvent':
+      return 'starred repository'
+    case 'ReleaseEvent':
+      return `released ${event.payload.release?.tag_name} in`
+    default:
+      return event.type
+  }
+}
+
+const EventItem = ({ event }: { event: GitHubUserEvent }) => {
+  const repoName = event.repo?.name.split('/').pop()
+
+  return (
+    <div className="flex items-start gap-3 py-2 text-sm">
+      <div className="mt-0.5 flex-shrink-0">
+        {EVENT_ICONS[event.type] || EVENT_ICONS.default}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1 flex-wrap">
+          <span className="font-medium">{event.actor.login}</span>
+          <span className="text-muted-foreground">{getEventActionText(event)}</span>
+          <a
+            href={`https://github.com/${event.repo.name}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:underline font-medium"
+          >
+            {repoName}
+          </a>
+          {event.type === 'PushEvent' && event.payload.commits?.length && event.payload.commits?.length > 0 && (
+            <div className="ml-2 text-xs text-muted-foreground">
+              {event.payload.commits[0].message.split('\n')[0]}
+            </div>
+          )}
+        </div>
+        <div className="text-xs text-muted-foreground mt-1">
+          {formatDistanceToNow(new Date(event.created_at), { addSuffix: true })}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 interface DevelopmentActivityProps {
   data: GitHubData
 }
 
 export function DevelopmentActivity({ data }: DevelopmentActivityProps) {
-  const getActivityColor = (activity: string) => {
-    switch (activity) {
-      case "high":
-        return "text-matrix-green"
-      case "medium":
-        return "text-cyber-orange"
-      case "low":
-        return "text-cyber-red"
-      default:
-        return "text-text-secondary"
-    }
-  }
 
   const getActivityBadge = (activity: string) => {
     switch (activity) {
       case "high":
-        return "bg-matrix-green-dim text-matrix-green-dark border-matrix-green"
+        return "bg-matrix-green-dim text-matrix-green-dark border-matrix-green text-center"
       case "medium":
-        return "bg-cyber-orange/20 text-cyber-orange border-cyber-orange"
+        return "bg-cyber-orange/20 text-cyber-orange border-cyber-orange text-center"
       case "low":
-        return "bg-cyber-red/20 text-cyber-red border-cyber-red"
+        return "bg-cyber-red/20 text-cyber-red border-cyber-red text-center"
       default:
-        return "bg-bg-secondary text-text-secondary border-border"
+        return "bg-bg-secondary text-text-secondary border-border text-centers"
     }
   }
 
-  const getHealthScore = () => {
-    let score = 0
-    if (data.stars > 1000) score += 25
-    else if (data.stars > 500) score += 20
-    else if (data.stars > 100) score += 15
-    else if (data.stars > 50) score += 10
-
-    if (data.weeklyCommits > 10) score += 25
-    else if (data.weeklyCommits > 5) score += 20
-    else if (data.weeklyCommits > 2) score += 15
-    else if (data.weeklyCommits > 0) score += 10
-
-    const issueRatio = data.closedIssues / (data.openIssues + data.closedIssues)
-    if (issueRatio > 0.8) score += 25
-    else if (issueRatio > 0.6) score += 20
-    else if (issueRatio > 0.4) score += 15
-    else if (issueRatio > 0.2) score += 10
-
-    return Math.min(100, score)
+  if (!data.userActivity) {
+    return (
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Github className="h-5 w-5" />
+            <span>Development Activity</span>
+          </CardTitle>
+          <CardDescription>Loading user activity data...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
-  const healthScore = getHealthScore()
+  const { events, eventCounts, repos, lastUpdated } = data.userActivity
+  const totalEvents = Object.values(eventCounts).reduce((sum, count) => sum + count, 0)
+  const repoCount = repos.size
+
+  // Get top 5 most active repositories
+  const repoActivity = events.reduce((acc, event) => {
+    if (!event.repo) return acc
+    acc[event.repo.name] = (acc[event.repo.name] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  const topRepos = Object.entries(repoActivity)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2">
-          <Github className="h-5 w-5 text-text-secondary" />
-          Development Activity
-        </CardTitle>
-        <div className="flex items-center justify-between mt-2">
-          <span className="text-sm text-text-secondary">Development Health Score</span>
-          <div className="flex items-center gap-2">
-            <div className="w-24 h-2 bg-bg-secondary rounded-full overflow-hidden">
-              <div
-                className={`h-full transition-all duration-500 ${healthScore >= 70 ? "bg-matrix-green" : healthScore >= 40 ? "bg-cyber-orange" : "bg-cyber-red"
-                  }`}
-                style={{ width: `${healthScore}%` }}
-              />
-            </div>
-            <span className="text-sm font-bold text-text-primary">{healthScore}/100</span>
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Github className="h-5 w-5" />
+              <span>Development Activity</span>
+            </CardTitle>
+            <CardDescription className="mt-1">
+              {repoCount} repositories • {totalEvents} events • Updated {formatDistanceToNow(new Date(lastUpdated), { addSuffix: true })}
+            </CardDescription>
           </div>
+          <Badge variant="outline" className={getActivityBadge(data.recentActivity)}>
+            {data.recentActivity} activity
+          </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Repository Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center gap-3 p-4 bg-bg-secondary rounded-lg border border-border">
-            <Star className="h-6 w-6 text-matrix-green" />
-            <div>
-              <p className="text-sm text-text-secondary font-medium">Stars</p>
-              <p className="text-xl font-bold text-text-primary">{data.stars.toLocaleString()}</p>
-              <p className="text-xs text-text-secondary">Community interest</p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-3 p-4 bg-bg-secondary rounded-lg border border-border">
-            <GitFork className="h-6 w-6 text-cyber-blue" />
-            <div>
-              <p className="text-sm text-text-secondary font-medium">Forks</p>
-              <p className="text-xl font-bold text-text-primary">{data.forks.toLocaleString()}</p>
-              <p className="text-xs text-text-secondary">Developer adoption</p>
-            </div>
-          </div>
+      <Tabs defaultValue="activity" className="flex-1 flex flex-col">
+        <TabsList className="px-4 bg-green-900/50 mx-4 border-border">
+          <TabsTrigger value="activity">Recent Activity</TabsTrigger>
+          <TabsTrigger value="repos">Top Repositories</TabsTrigger>
+          <TabsTrigger value="stats">Statistics</TabsTrigger>
+        </TabsList>
 
-          <div className="flex items-center gap-3 p-4 bg-bg-secondary rounded-lg border border-border">
-            <Users className="h-6 w-6 text-cyber-purple" />
-            <div>
-              <p className="text-sm text-text-secondary font-medium">Contributors</p>
-              <p className="text-xl font-bold text-text-primary">{data.contributors}</p>
-              <p className="text-xs text-text-secondary">Active developers</p>
+        <TabsContent value="activity" className="flex-1 overflow-hidden">
+          <ScrollArea className="h-dvh px-4 bg-bg-secondary rounded-lg m-4">
+            <div className="space-y-4 py-2">
+              {events.length > 0 ? (
+                events.map((event) => (
+                  <EventItem key={event.id} event={event} />
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No recent activity found
+                </div>
+              )}
             </div>
-          </div>
+          </ScrollArea>
+        </TabsContent>
 
-          <div className="flex items-center gap-3 p-4 bg-bg-secondary rounded-lg border border-border">
-            <GitCommit className="h-6 w-6 text-matrix-green" />
+        <TabsContent value="repos" className="p-4">
+          <div className="space-y-4">
+            {topRepos.map(([repo, count]) => (
+              <div key={repo} className="flex items-center justify-between">
+                <a
+                  href={`https://github.com/${repo}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:underline truncate"
+                >
+                  {repo.split('/').pop()}
+                </a>
+                <Badge variant="outline" className="ml-2">
+                  {count} {count === 1 ? 'event' : 'events'}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="stats" className="p-4">
+          <div className="space-y-4">
             <div>
-              <p className="text-sm text-text-secondary font-medium">Weekly Commits</p>
-              <p className="text-xl font-bold text-text-primary">{data.weeklyCommits}</p>
-              <p className="text-xs text-text-secondary">Recent activity</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Issue Management */}
-        <div className="space-y-3">
-          <h4 className="font-medium text-text-primary flex items-center gap-2">
-            <Code className="h-4 w-4" />
-            Issue Management
-          </h4>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center gap-3 p-3 bg-bg-secondary rounded-lg border border-border">
-              <AlertCircle className="h-5 w-5 text-cyber-orange" />
-              <div>
-                <p className="text-sm text-text-secondary font-medium">Open Issues</p>
-                <p className="text-lg font-bold text-text-primary">{data.openIssues}</p>
+              <h4 className="text-sm font-medium mb-2">Event Types</h4>
+              <div className="space-y-2">
+                {Object.entries(eventCounts).map(([type, count]) => (
+                  <div key={type} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {EVENT_ICONS[type] || EVENT_ICONS.default}
+                      <span className="capitalize">{type.replace('Event', '')}</span>
+                    </div>
+                    <span className="text-sm font-medium">{count}</span>
+                  </div>
+                ))}
               </div>
             </div>
-
-            <div className="flex items-center gap-3 p-3 bg-bg-secondary rounded-lg border border-border">
-              <CheckCircle className="h-5 w-5 text-matrix-green" />
-              <div>
-                <p className="text-sm text-text-secondary font-medium">Closed Issues</p>
-                <p className="text-lg font-bold text-text-primary">{data.closedIssues}</p>
-              </div>
-            </div>
           </div>
+        </TabsContent>
+      </Tabs>
 
-          <div className="p-3 bg-bg-secondary rounded-lg">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-text-secondary">Issue Resolution Rate</span>
-              <span className="text-sm font-bold text-text-primary">
-                {((data.closedIssues / (data.openIssues + data.closedIssues)) * 100).toFixed(1)}%
-              </span>
-            </div>
-            <div className="w-full h-2 bg-bg-tertiary rounded-full overflow-hidden">
-              <div
-                className="h-full bg-matrix-green transition-all duration-500"
-                style={{
-                  width: `${(data.closedIssues / (data.openIssues + data.closedIssues)) * 100}%`,
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Activity Timeline */}
-        <div className="space-y-3">
-          <h4 className="font-medium text-text-primary flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            Recent Activity
-          </h4>
-          <div className="flex items-center gap-3 p-3 bg-bg-secondary rounded-lg">
-            <Clock className="h-5 w-5 text-text-secondary" />
-            <div className="flex-1">
-              <p className="text-sm text-text-secondary">Last Commit</p>
-              <p className="text-sm font-medium text-text-primary">{data.lastCommit}</p>
-            </div>
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-medium border ${getActivityBadge(data.recentActivity)}`}
-            >
-              {data.recentActivity.toUpperCase()} ACTIVITY
-            </span>
-          </div>
-        </div>
-
-        {/* Development Insights */}
-        <div className="text-xs text-text-secondary bg-bg-secondary p-4 rounded-lg border border-border">
-          <p className="font-medium mb-2 text-text-primary">Development Insights</p>
-          <div className="space-y-1">
-            <p>• Active development with regular commits and community engagement</p>
-            <p>• Strong community support with {data.stars.toLocaleString()} stars</p>
-            <p>• {data.contributors} contributors actively maintaining the codebase</p>
-            <p>• Healthy issue resolution rate indicating good project maintenance</p>
-          </div>
-        </div>
-      </CardContent>
+      <div className="p-4 border-t">
+        <a
+          href={`https://github.com/${data.userActivity.events[0]?.actor.login}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-blue-500 hover:underline flex items-center justify-center"
+        >
+          View full activity on GitHub <span className="ml-1">↗</span>
+        </a>
+      </div>
     </Card>
   )
 }

@@ -26,6 +26,8 @@ export const API_CONFIG = {
       COMMITS: "/repos/{owner}/{repo}/commits",
       CONTRIBUTORS: "/repos/{owner}/{repo}/contributors",
       ISSUES: "/repos/{owner}/{repo}/issues",
+      USER_EVENTS: "/users/{username}/events/public",
+      USER_ORGS: "/users/{username}/orgs"
     },
   },
 
@@ -100,7 +102,10 @@ export const getApiUrl = (service: keyof typeof API_CONFIG, endpoint: string, pa
 }
 
 export const getRateLimit = (service: keyof typeof API_CONFIG, hasToken = false) => {
-  const config = API_CONFIG[service]
+  const config = API_CONFIG[service] as any
+  if (!config) {
+    throw new Error(`Invalid service: ${service}`)
+  }
 
   if (service === "GITHUB") {
     return hasToken ? config.RATE_LIMIT_AUTHENTICATED : config.RATE_LIMIT_UNAUTHENTICATED
