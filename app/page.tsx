@@ -1,6 +1,6 @@
 "use client"
 
-import { RefreshCw, DollarSign, TrendingUp, BarChart3 } from "lucide-react"
+import { RefreshCw } from "lucide-react"
 import { PriceOverview } from "@/components/PriceOverview"
 import { DevelopmentActivity } from "@/components/DevelopmentActivity"
 import { ErrorDisplay } from "@/components/ErrorBoundary"

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Github, Star, GitFork, AlertCircle, Clock, Users, GitCommit, CheckCircle, Code, Activity, GitPullRequest, GitBranch, GitCommitIcon, GitMerge, GitPullRequestClosed, GitCompare, Tag, GitFork as GitForkIcon, Code2 } from "lucide-react"
+import { Github, Star, AlertCircle, GitCommit, Activity, GitPullRequest, GitCommitIcon, Tag, GitFork as GitForkIcon, Code2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"

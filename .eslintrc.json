@@ -1,0 +1,13 @@
+{
+  "extends": [
+    "next/core-web-vitals",
+    "next/typescript"
+  ],
+  "rules": {
+    // "no-console": ["error", { "allow": ["warn", "error"] }],
+    // "@typescript-eslint/ban-types": "error",
+    // "@typescript-eslint/explicit-module-boundary-types": "error"
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-explicit-any": "error"
+  }
+}
