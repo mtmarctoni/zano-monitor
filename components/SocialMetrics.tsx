@@ -13,8 +13,8 @@ interface RedditMetrics {
 
 interface SocialMetricsData {
     reddit?: RedditMetrics;
-    twitter?: any; // Placeholder for Twitter metrics
-    telegram?: any; // Placeholder for Telegram metrics
+    twitter?: null; // Placeholder for Twitter metrics
+    telegram?: null; // Placeholder for Telegram metrics
 }
 
 export function SocialMetrics() {

@@ -8,17 +8,6 @@ interface OnchainMetricsProps {
 }
 
 export function OnchainMetrics({ data }: OnchainMetricsProps) {
-  const getAdoptionColor = (score: number) => {
-    if (score >= 70) return "text-matrix-green"
-    if (score >= 40) return "text-cyber-orange"
-    return "text-cyber-red"
-  }
-
-  const getAdoptionBadge = (score: number) => {
-    if (score >= 70) return "bg-matrix-green-dim text-matrix-green-dark border-matrix-green"
-    if (score >= 40) return "bg-cyber-orange/20 text-cyber-orange border-cyber-orange"
-    return "bg-cyber-red/20 text-cyber-red border-cyber-red"
-  }
 
   const getNetworkStatusColor = (state: number) => {
     switch (state) {

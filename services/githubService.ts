@@ -1,4 +1,3 @@
-import type { GitHubData } from "@/types/dashboard"
 import { API_CONFIG, getApiUrl, getRateLimit } from "@/config/api"
 
 export interface GitHubRepoResponse {
@@ -25,6 +24,52 @@ export interface GitHubIssuesResponse {
   state: "open" | "closed"
   created_at: string
   closed_at?: string
+}
+
+export interface GitHubUserEvent {
+  id: string;
+  type: string;
+  actor: {
+    login: string;
+    avatar_url: string;
+  };
+  repo: {
+    id: number;
+    name: string;
+    url: string;
+  };
+  payload: {
+    action?: string;
+    ref?: string;
+    ref_type?: string;
+    push_id?: number;
+    size?: number;
+    distinct_size?: number;
+    commits?: Array<{
+      sha: string;
+      message: string;
+      url: string;
+    }>;
+  };
+  public: boolean;
+  created_at: string;
+}
+
+export interface GitHubData {
+  stars: number
+  forks: number
+  openIssues: number
+  closedIssues: number
+  contributors: number
+  weeklyCommits: number
+  lastCommit: string
+  recentActivity: "high" | "medium" | "low"
+  userActivity: {
+    events: GitHubUserEvent[]
+    eventCounts: Record<string, number>
+    repos: Set<string>
+    lastUpdated: string
+  } | null // Optional field for user activity
 }
 
 export class GitHubService {
@@ -117,6 +162,21 @@ export class GitHubService {
     }
   }
 
+  private calculateUserActivityLevel(events: GitHubUserEvent[]): "high" | "medium" | "low" {
+    // Count events from the last 7 days
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    const recentEvents = events.filter(event =>
+      new Date(event.created_at) > oneWeekAgo
+    ).length;
+
+    // Adjust these thresholds as needed
+    if (recentEvents >= 20) return "high";
+    if (recentEvents >= 5) return "medium";
+    return "low";
+  }
+
   async fetchRepositoryData(
     owner: string = API_CONFIG.ZANO.GITHUB_OWNER,
     repo: string = API_CONFIG.ZANO.GITHUB_REPO,
@@ -206,16 +266,76 @@ export class GitHubService {
     }
   }
 
+  async fetchUserEvents(username: string = API_CONFIG.ZANO.GITHUB_OWNER, perPage: number = 100): Promise<GitHubUserEvent[]> {
+    try {
+      const endpoint = API_CONFIG.GITHUB.ENDPOINTS.USER_EVENTS.replace('{username}', username);
+      const response = await this.makeRequest(`${endpoint}?per_page=${perPage}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user events: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching user events:', error);
+      throw error;
+    }
+  }
+
+  async fetchUserActivity(username: string = API_CONFIG.ZANO.GITHUB_OWNER): Promise<{
+    events: GitHubUserEvent[];
+    eventCounts: Record<string, number>;
+    repos: Set<string>;
+    lastUpdated: string;
+  }> {
+    try {
+      const events = await this.fetchUserEvents(username);
+      const now = new Date();
+
+      // Filter events from the last 30 days
+      const thirtyDaysAgo = new Date(now);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const recentEvents = events.filter(event =>
+        new Date(event.created_at) >= thirtyDaysAgo
+      );
+
+      // Count event types
+      const eventCounts = recentEvents.reduce((acc, event) => {
+        acc[event.type] = (acc[event.type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      // Get unique repositories
+      const repos = new Set(
+        recentEvents
+          .filter(event => event.repo)
+          .map(event => event.repo.name)
+      );
+
+      return {
+        events: recentEvents,
+        eventCounts,
+        repos,
+        lastUpdated: now.toISOString()
+      };
+    } catch (error) {
+      console.error('Error fetching user activity:', error);
+      throw error;
+    }
+  }
+
   async fetchAllData(repoPath: string = API_CONFIG.ZANO.FULL_REPO_PATH): Promise<GitHubData> {
     const [owner, repo] = repoPath.split("/")
 
     try {
       // Fetch all data in parallel
-      const [repoData, commits, contributors, closedIssuesCount] = await Promise.allSettled([
+      const [repoData, commits, contributors, closedIssuesCount, userActivity] = await Promise.allSettled([
         this.fetchRepositoryData(owner, repo),
         this.fetchRecentCommits(owner, repo, 100),
         this.fetchContributors(owner, repo),
         this.fetchClosedIssues(owner, repo),
+        this.fetchUserActivity(owner),
       ])
 
       // Handle repository data
@@ -226,7 +346,6 @@ export class GitHubService {
       // Calculate weekly commits
       let weeklyCommits = 0
       let lastCommit = "Unknown"
-      let recentActivity: "high" | "medium" | "low" = "low"
 
       if (commits.status === "fulfilled" && commits.value.length > 0) {
         const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
@@ -236,6 +355,14 @@ export class GitHubService {
         }).length
 
         lastCommit = this.formatLastCommitDate(commits.value[0].commit.committer.date)
+      }
+
+      // Calculate activity level based on user activity if available
+      let recentActivity: "high" | "medium" | "low" = "low"
+      if (userActivity.status === "fulfilled" && userActivity.value.events.length > 0) {
+        recentActivity = this.calculateUserActivityLevel(userActivity.value.events)
+      } else if (commits.status === "fulfilled") {
+        // Fallback to repo-based activity if no user activity data
         recentActivity = this.calculateActivityLevel(weeklyCommits)
       }
 
@@ -254,6 +381,7 @@ export class GitHubService {
         weeklyCommits,
         lastCommit,
         recentActivity,
+        userActivity: userActivity.status === "fulfilled" ? userActivity.value : null,
       }
     } catch (error) {
       console.error("Error fetching GitHub data:", error)
