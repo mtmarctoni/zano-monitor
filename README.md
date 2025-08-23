@@ -1,30 +1,81 @@
-# zano-monitor
+# Zano Monitor
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+A modern dashboard for monitoring the Zano cryptocurrency network. Aggregates and visualizes data from the Zano blockchain, CoinGecko, GitHub, and Reddit to provide a comprehensive overview of network health, price, development, and social activity.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/mtmarctonis-projects/v0-zano-monitor)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/1uGaENEzKSe)
+## Features
 
-## Overview
+- **Price Overview:**
+  - ZANO price, market cap, volume, and network score (CoinGecko)
+- **Development Activity:**
+  - GitHub stats: stars, forks, contributors, commits, issues, top repositories, recent events
+- **Onchain Metrics:**
+  - Blockchain stats: hashrate, block time, mempool size, block utilization, adoption score, and more (Zano Explorer)
+- **Social Metrics:**
+  - Reddit data: subscribers, active users, recent posts, average upvotes, average comments
+- **Responsive UI:**
+  - Built with Next.js, TailwindCSS, Radix UI (shadcn/ui), and Lucide icons
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+## Tech Stack
+
+- **Frontend:** Next.js (React), TailwindCSS, Radix UI (shadcn/ui), Lucide icons
+- **Data Fetching:** Custom services for CoinGecko, GitHub, Zano Explorer, Reddit
+- **State Management:** React hooks
+- **Styling:** TailwindCSS, custom themes
+- **Deployment:** Vercel
+
+## Project Structure
+
+- `app/page.tsx` — Main dashboard page
+- `components/` — UI components for dashboard sections
+- `services/` — API service classes for each data source
+- `hooks/useZanoData.ts` — Central hook for fetching and refreshing dashboard data
+- `config/api.ts` — Centralized API configuration
+- `types/` — TypeScript interfaces for data models
+
+## Setup
+
+1. **Install dependencies:**
+   ```bash
+   pnpm install
+   ```
+2. **Run locally:**
+   ```bash
+   pnpm run dev
+   ```
+3. **Build for production:**
+   ```bash
+   pnpm run build
+   ```
+4. **Lint:**
+   ```bash
+   pnpm run lint
+   ```
+5. **Start production server:**
+   ```bash
+   pnpm start
+   ```
+
+## Environment
+
+- Node.js >= 20
+- pnpm >= 10
+
+## Configuration
+
+- API endpoints and refresh intervals are managed in `config/api.ts`.
+- Environment variables can be added for secrets or custom endpoints if needed.
+
+## Data Sources
+
+- **CoinGecko:** Price, market cap, volume
+- **GitHub:** Repository activity, contributors, commits, issues
+- **Zano Explorer:** Blockchain stats
+- **Reddit:** Social metrics
 
 ## Deployment
 
-Your project is live at:
+- Deployed on Vercel: [https://vercel.com/mtmarctonis-projects/v0-zano-monitor](https://vercel.com/mtmarctonis-projects/v0-zano-monitor)
 
-**[https://vercel.com/mtmarctonis-projects/v0-zano-monitor](https://vercel.com/mtmarctonis-projects/v0-zano-monitor)**
+## License
 
-## Build your app
-
-Continue building your app on:
-
-**[https://v0.dev/chat/projects/1uGaENEzKSe](https://v0.dev/chat/projects/1uGaENEzKSe)**
-
-## How It Works
-
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+MIT
