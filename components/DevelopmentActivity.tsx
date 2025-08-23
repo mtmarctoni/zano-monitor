@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Github, Star, GitFork, AlertCircle, Clock, Users, GitCommit, CheckCircle, Code, Activity, GitPullRequest, GitBranch, GitCommitIcon, GitMerge, GitPullRequestClosed, GitCompare, Tag, GitFork as GitForkIcon, Code2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { formatDistanceToNow } from "date-fns"

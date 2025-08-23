@@ -27,7 +27,7 @@ export const API_CONFIG = {
       CONTRIBUTORS: "/repos/{owner}/{repo}/contributors",
       ISSUES: "/repos/{owner}/{repo}/issues",
       USER_EVENTS: "/users/{username}/events/public",
-      USER_ORGS: "/users/{username}/orgs"
+      USER_ORGS: "/users/{username}/orgs",
     },
   },
 
@@ -64,6 +64,15 @@ export const API_CONFIG = {
     BLOCKS_PER_DAY: 1440, // Approximate blocks per day (1 minute block time)
   },
 
+  // Reddit API configuration
+  REDDIT: {
+    BASE_URL: "https://corsproxy.io/?https://www.reddit.com/r/Zano",
+    ENDPOINTS: {
+      ABOUT: "/about.json",
+      NEW_POSTS: "/new.json?limit=25",
+    },
+  },
+
   // Request configuration
   REQUEST: {
     MAX_RETRIES: 3,
@@ -76,44 +85,54 @@ export const API_CONFIG = {
 
   // Error messages
   ERROR_MESSAGES: {
-    NETWORK_ERROR: "Network connection failed. Please check your internet connection.",
+    NETWORK_ERROR:
+      "Network connection failed. Please check your internet connection.",
     API_RATE_LIMIT: "API rate limit exceeded. Please try again later.",
     API_UNAVAILABLE: "API service is temporarily unavailable.",
     INVALID_RESPONSE: "Received invalid response from API.",
     TIMEOUT: "Request timed out. Please try again.",
   },
-}
+};
 
 // Helper functions for configuration
-export const getApiUrl = (service: keyof typeof API_CONFIG, endpoint: string, params: Record<string, string> = {}) => {
-  const config = API_CONFIG[service]
+export const getApiUrl = (
+  service: keyof typeof API_CONFIG,
+  endpoint: string,
+  params: Record<string, string> = {}
+) => {
+  const config = API_CONFIG[service];
   if (!config || !("BASE_URL" in config)) {
-    throw new Error(`Invalid service: ${service}`)
+    throw new Error(`Invalid service: ${service}`);
   }
 
-  let url = `${config.BASE_URL}${endpoint}`
+  let url = `${config.BASE_URL}${endpoint}`;
 
   // Replace path parameters
   Object.entries(params).forEach(([key, value]) => {
-    url = url.replace(`{${key}}`, value)
-  })
+    url = url.replace(`{${key}}`, value);
+  });
 
-  return url
-}
+  return url;
+};
 
-export const getRateLimit = (service: keyof typeof API_CONFIG, hasToken = false) => {
-  const config = API_CONFIG[service] as any
+export const getRateLimit = (
+  service: keyof typeof API_CONFIG,
+  hasToken = false
+) => {
+  const config = API_CONFIG[service] as any;
   if (!config) {
-    throw new Error(`Invalid service: ${service}`)
+    throw new Error(`Invalid service: ${service}`);
   }
 
   if (service === "GITHUB") {
-    return hasToken ? config.RATE_LIMIT_AUTHENTICATED : config.RATE_LIMIT_UNAUTHENTICATED
+    return hasToken
+      ? config.RATE_LIMIT_AUTHENTICATED
+      : config.RATE_LIMIT_UNAUTHENTICATED;
   }
 
   if (service === "COINGECKO") {
-    return hasToken ? config.RATE_LIMIT_PRO : config.RATE_LIMIT_FREE
+    return hasToken ? config.RATE_LIMIT_PRO : config.RATE_LIMIT_FREE;
   }
 
-  return 60 // default fallback
-}
+  return 60; // default fallback
+};
