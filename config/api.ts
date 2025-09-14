@@ -1,8 +1,13 @@
+const isCorsProxyEnabled = true; // Set to false to disable CORS proxy
+const CORS_PROXY = isCorsProxyEnabled ? "https://corsproxy.io/?" : "";
+
+// Centralized API configuration
+
 export const API_CONFIG = {
   // CoinGecko API configuration
   COINGECKO: {
-    BASE_URL: "https://api.coingecko.com/api/v3",
-    PRO_BASE_URL: "https://pro-api.coingecko.com/api/v3",
+    BASE_URL: `${CORS_PROXY}https://api.coingecko.com/api/v3`,
+    PRO_BASE_URL: `${CORS_PROXY}https://pro-api.coingecko.com/api/v3`,
     RATE_LIMIT_FREE: 50, // requests per minute for free tier
     RATE_LIMIT_PRO: 500, // requests per minute for pro tier
     TIMEOUT: 10000, // 10 seconds
@@ -16,7 +21,7 @@ export const API_CONFIG = {
 
   // GitHub API configuration
   GITHUB: {
-    BASE_URL: "https://api.github.com",
+    BASE_URL: `${CORS_PROXY}https://api.github.com`,
     RATE_LIMIT_UNAUTHENTICATED: 60, // requests per hour
     RATE_LIMIT_AUTHENTICATED: 5000, // requests per hour with token
     TIMEOUT: 10000, // 10 seconds
@@ -33,7 +38,7 @@ export const API_CONFIG = {
 
   // Zano Blockchain Explorer API configuration
   ONCHAIN: {
-    BASE_URL: "https://explorer.zano.org/api",
+    BASE_URL: `${CORS_PROXY}https://explorer.zano.org/api`,
     TIMEOUT: 20000, // 20 seconds (blockchain APIs can be slower)
     CACHE_TTL: 180, // 3 minutes in seconds
     ENDPOINTS: {
@@ -59,14 +64,14 @@ export const API_CONFIG = {
     GITHUB_REPO: "zano",
     SYMBOL: "ZANO",
     FULL_REPO_PATH: "hyle-team/zano",
-    EXPLORER_URL: "https://explorer.zano.org",
+    EXPLORER_URL: `${CORS_PROXY}https://explorer.zano.org`,
     DECIMALS: 12, // ZANO has 12 decimal places
     BLOCKS_PER_DAY: 1440, // Approximate blocks per day (1 minute block time)
   },
 
   // Reddit API configuration
   REDDIT: {
-    BASE_URL: "https://corsproxy.io/?https://www.reddit.com/r/Zano",
+    BASE_URL: `${CORS_PROXY}https://www.reddit.com/r/Zano`,
     ENDPOINTS: {
       ABOUT: "/about.json",
       NEW_POSTS: "/new.json?limit=25",
